@@ -1,7 +1,6 @@
 #!/usr/bin/perl
 use strict;
 use warnings;
-use feature qw(switch say);
 use LWP::Simple;
 
 my $DEBUG;
@@ -52,15 +51,6 @@ if ( $ckp < $ocskp ) {
 	$message = "UNKNOWN - NFI";
 	$exitcode = 3;
 }
-
-
-#given ($used_space) {
-#    chomp($used_space);
-#    when ($used_space lt '85%') { print "OK - $used_space of disk space used."; exit(0);      }
-#    when ($used_space eq '85%') { print "WARNING - $used_space of disk space used."; exit(1);      }
-#    when ($used_space gt '85%') { print "CRITICAL - $used_space of disk space used."; exit(2); }
-#    default { print "UNKNOWN - $used_space of disk space used."; exit(3); }
-#}
 
 print $message;
 exit $exitcode;

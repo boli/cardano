@@ -45,7 +45,7 @@ if ( $ckp < $ocskp ) {
 	$message = "WARNING - Certificate Expires Soon";
 	$exitcode = 1;
 } elsif ( ( $ckp > $ocskp ) && ( $ckp < $ocekp ) ) {
-	$message="OK - Certificate is OK";
+	$message="OK - Certificate is OK $ckp < $ocekp";
 	$exitcode=0;
 } else {
 	$message = "UNKNOWN - NFI";

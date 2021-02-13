@@ -6,7 +6,8 @@ use LWP::Simple;
 my $DEBUG;
 
 my $metricsurl="http://127.0.0.1:12798/metrics";
-my $warn = 20;
+my $warn = 7;
+my $crit = 2;
 
 my $metricsdata = get($metricsurl);
 
@@ -41,8 +42,11 @@ if ( $ckp < $ocskp ) {
 } elsif ( $ckp > $ocekp ) {
 	$message="CRITICAL - OPCert Has Expired";
 	$exitcode=2;
+} elsif ( ( $ocekp - $ckp ) < $crit ) {
+        $message = "CRITICAL - Certificate Expires Imminently $ckp / $ocekp";
+        $exitcode = 1;
 } elsif ( ( $ocekp - $ckp ) < $warn ) {
-	$message = "WARNING - Certificate Expires Soon";
+	$message = "WARNING - Certificate Expires Soon $ckp / $ocekp";
 	$exitcode = 1;
 } elsif ( ( $ckp > $ocskp ) && ( $ckp < $ocekp ) ) {
 	$message="OK - Certificate is OK $ckp < $ocekp";
@@ -54,3 +58,4 @@ if ( $ckp < $ocskp ) {
 
 print $message;
 exit $exitcode;
+

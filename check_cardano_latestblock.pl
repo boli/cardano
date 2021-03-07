@@ -25,8 +25,8 @@ my $latest_blockchair =$1;
 $DEBUG && print $latest_blockchair."\n";
 
 my $metricsurl="http://127.0.0.1:12798/metrics";
-my $warn = 20;
-my $crit = 10;
+my $warn = 30;
+my $crit = 50;
 
 my $metricsdata = get($metricsurl);
 
@@ -55,13 +55,13 @@ if ( $DEBUG ) {
 };
 
 if ( $blockdiff > $crit ) {
-	$message="CRITICAL - $blockdiff $localblock $latest_blockchair";
+	$message="CRITICAL - HERE $localblock THERE $latest_blockchair ( $blockdiff > $crit )";
 	$exitcode=2;
 } elsif ( $blockdiff > $warn ) {
-        $message = "WARNING - $blockdiff $localblock $latest_blockchair";
+        $message = "WARNING - HERE $localblock THERE $latest_blockchair ( $crit > $blockdiff > $warn )";
         $exitcode = 1;
 } elsif ( $blockdiff < $warn ) {
-	$message="OK - $blockdiff < $warn";
+	$message="OK - HERE $localblock THERE $latest_blockchair ( $blockdiff < $warn )";
 	$exitcode=0;
 } else {
 	$message = "UNKNOWN - NFI";

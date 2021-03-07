@@ -22,9 +22,9 @@ foreach my $line (@lines) {
 	$metric{$key}=$value;
 }
 
-my $ocskp=$metric{'cardano_node_Forge_metrics_operationalCertificateStartKESPeriod_int'} || 0;
-my $ocekp=$metric{'cardano_node_Forge_metrics_operationalCertificateExpiryKESPeriod_int'} || 0;
-my $ckp=$metric{'cardano_node_Forge_metrics_currentKESPeriod_int'} || 0;
+my $ocskp=$metric{'cardano_node_metrics_operationalCertificateStartKESPeriod_int'} || 0;
+my $ocekp=$metric{'cardano_node_metrics_operationalCertificateExpiryKESPeriod_int'} || 0;
+my $ckp=$metric{'cardano_node_metrics_currentKESPeriod_int'} || 0;
 
 if ( $DEBUG ) {
 	print $metricsdata;
@@ -40,16 +40,16 @@ if ( $ckp < $ocskp ) {
 	$message="CRITICAL - OPCert Not Yet Valid";
 	$exitcode=2;
 } elsif ( $ckp > $ocekp ) {
-	$message="CRITICAL - OPCert Has Expired";
+	$message="CRITICAL - OPCert Has Expired ( $ckp > $ocekp )";
 	$exitcode=2;
 } elsif ( ( $ocekp - $ckp ) < $crit ) {
-        $message = "CRITICAL - Certificate Expires Imminently $ckp / $ocekp";
+        $message = "CRITICAL - Certificate Expires Imminently ( $ckp < $ocekp )";
         $exitcode = 1;
 } elsif ( ( $ocekp - $ckp ) < $warn ) {
-	$message = "WARNING - Certificate Expires Soon $ckp / $ocekp";
+	$message = "WARNING - Certificate Expires Soon ( $ckp < $ocekp )";
 	$exitcode = 1;
 } elsif ( ( $ckp > $ocskp ) && ( $ckp < $ocekp ) ) {
-	$message="OK - Certificate is OK $ckp < $ocekp";
+	$message="OK - Certificate is OK ( $ckp < $ocekp )";
 	$exitcode=0;
 } else {
 	$message = "UNKNOWN - NFI";

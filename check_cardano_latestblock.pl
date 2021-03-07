@@ -1,15 +1,32 @@
 #!/usr/bin/perl
 use strict;
 use warnings;
+use LWP;
 use LWP::Simple;
 
 my $DEBUG;
 
 #curl -s https://blockchair.com/cardano|grep "Latest block" -m1|sed 's/.*Latest/Latest/'|sed 's/<\/a>.*//'|sed 's/.*<.*>//'
 
+my $url_blockchair='https://blockchair.com/cardano';
+my $browser = LWP::UserAgent->new;
+my $response_blockchair=$browser->get($url_blockchair);
+
+die "Error at $url_blockchair\n ", $response_blockchair->status_line, "\n Aborting" unless $response_blockchair->is_success;
+
+my $data_blockchair=$response_blockchair->content;
+#$DEBUG && print $data_blockchair."\n";
+
+#my $latest_blockchair=`curl -s https://blockchair.com/cardano|grep "Latest block" -m1|sed 's/.*Latest/Latest/'|sed 's/<\/a>.*//'|sed 's/.*<.*>//'`;
+#print "Latest = $latest_blockchair\n";
+$data_blockchair =~ /Latest block.*?(\d+)/s;
+
+my $latest_blockchair =$1;
+$DEBUG && print $latest_blockchair."\n";
+
 my $metricsurl="http://127.0.0.1:12798/metrics";
-my $warn = 7;
-my $crit = 2;
+my $warn = 20;
+my $crit = 10;
 
 my $metricsdata = get($metricsurl);
 
@@ -24,34 +41,27 @@ foreach my $line (@lines) {
 	$metric{$key}=$value;
 }
 
-my $ocskp=$metric{'cardano_node_Forge_metrics_operationalCertificateStartKESPeriod_int'} || 0;
-my $ocekp=$metric{'cardano_node_Forge_metrics_operationalCertificateExpiryKESPeriod_int'} || 0;
-my $ckp=$metric{'cardano_node_Forge_metrics_currentKESPeriod_int'} || 0;
+my $localblock=$metric{'cardano_node_metrics_blockNum_int'} || 0;
 
-if ( $DEBUG ) {
-	print $metricsdata;
-	print "start = $ocskp\n";
-	print "end = $ocekp\n";
-	print "now = $ckp\n";
-};
-
-my $message = "UNKNOWN : NFI $ocskp $ocekp $ckp";
+my $blockdiff = abs($latest_blockchair - $localblock);
+my $message = "UNKNOWN : NFI $localblock $latest_blockchair";
 my $exitcode = 2;
 
-if ( $ckp < $ocskp ) {
-	$message="CRITICAL - OPCert Not Yet Valid";
+if ( $DEBUG ) {
+#	print $metricsdata;
+	print "blockdiff = $blockdiff\n";
+  print "latest_blockchair = $latest_blockchair\n";
+  print "localblock = $localblock\n";
+};
+
+if ( $blockdiff > $crit ) {
+	$message="CRITICAL - $blockdiff $localblock $latest_blockchair";
 	$exitcode=2;
-} elsif ( $ckp > $ocekp ) {
-	$message="CRITICAL - OPCert Has Expired";
-	$exitcode=2;
-} elsif ( ( $ocekp - $ckp ) < $crit ) {
-        $message = "CRITICAL - Certificate Expires Imminently $ckp / $ocekp";
+} elsif ( $blockdiff > $warn ) {
+        $message = "WARNING - $blockdiff $localblock $latest_blockchair";
         $exitcode = 1;
-} elsif ( ( $ocekp - $ckp ) < $warn ) {
-	$message = "WARNING - Certificate Expires Soon $ckp / $ocekp";
-	$exitcode = 1;
-} elsif ( ( $ckp > $ocskp ) && ( $ckp < $ocekp ) ) {
-	$message="OK - Certificate is OK $ckp < $ocekp";
+} elsif ( $blockdiff < $warn ) {
+	$message="OK - $blockdiff < $warn";
 	$exitcode=0;
 } else {
 	$message = "UNKNOWN - NFI";
